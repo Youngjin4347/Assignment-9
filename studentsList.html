@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    
+    
+</body>
+</html>
+
+<script>
+    window.addEventListener("load",function(){
+
+        const students = [
+            {id: 1, name: "Kim", age: 20, score: 85},
+            {id: 2, name: "Lee", age: 21, score: 92},
+            {id: 3, name: "Park", age: 22, score: 78},
+            {id: 4, name: "Choi", age: 19, score: 92}
+        ]
+
+        //새로운 배열 names만들기
+        const names = students.map(function(student){
+            return student.name;
+        })
+
+        console.log(students);
+        console.log(names);
+
+        //이름이 lee인 학생
+        const findName = students.find(function(student){
+            return student.name ==="Lee";
+        })
+
+        console.log(findName);
+
+        //점수가 90이상인 학생 필터링
+        const result = students.filter(function(student) {
+            return student.score >= 90;
+        })
+        console.log(result);
+
+        //선택한 데이터 삭제
+        const resultRE = students.filter(function(student) {
+            return student.id !==2;
+        })
+        console.log(resultRE);
+
+    })
+</script>

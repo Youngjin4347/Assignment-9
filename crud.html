@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <!--bootstrap-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- My CSS -->
+    <link rel="stylesheet" href="my.css">
+
+    <script>
+
+        function showBooks(bookList) {
+            let list = document.querySelector("#bookList");
+            list.innerHTML = "";
+
+            for (let i = 0; i < bookList.length; i++) {
+                let book = bookList[i];
+                let li = document.createElement("li");
+
+                li.innerText = book.bookId;
+                li.innerText += " - " + book.title;
+                li.innerText += " - " + book.author;
+                li.innerText += " - " + book.genre;
+                li.innerText += " - " + book.publisher;
+                li.innerText += " - " + book.status;
+
+                let deleteBtn = document.createElement("button");
+                deleteBtn.className = "btn btn-danger btn-sm ms-2";
+                deleteBtn.textContent = "삭제";
+
+                deleteBtn.addEventListener("click", async function () {
+                    if (confirm("정말 삭제하시겠습니까?")) {
+                        try {
+                            await deleteBook(book.id);
+                        }
+                        catch (error) {
+                            alert(error.message);
+                        }
+                    }
+
+                });
+
+                let updateBtn = document.createElement("button");
+                updateBtn.className = "btn btn-warning btn-sm ms-2";
+                updateBtn.textContent = "수정";
+                updateBtn.addEventListener("click", function () {
+
+                    updateId = book.id;
+
+                    document.querySelector("#bookId").value = book.bookId;
+                    document.querySelector("#title").value = book.title;
+                    document.querySelector("#genre").value = book.genre;
+                    document.querySelector("#author").value = book.author;
+                    document.querySelector("#publisher").value = book.publisher;
+                    document.querySelector("#status").value = book.status;
+
+                });
+
+                li.appendChild(updateBtn);
+                li.appendChild(deleteBtn);
+                list.appendChild(li);
+
+            };
+        }
+
+        window.onload = function () {
+            loadBooks(books);
+
+            let addBtn = document.querySelector("#addBtn");
+            const bookForm = document.querySelector("#bookForm");
+
+            let searchBtn = document.querySelector("#searchBtn");
+            searchBtn.addEventListener("click", function () {
+                let searchBook = document.querySelector("#searchBook").value;
+                let searchList = books.filter(function (book) {
+                    return book.title.includes(searchBook);
+                });
+                showBooks(searchList);
+            });
+
+            bookForm.addEventListener("submit", async function (event) {
+
+                event.preventDefault();
+
+                if (!bookForm.checkValidity()) {
+                    bookForm.reportValidity();
+                    return;
+                }
+
+                let bookId = document.querySelector("#bookId").value;
+                let bookTitle = document.querySelector("#title").value;
+                let bookGenre = document.querySelector("#genre").value;
+                let bookAuthor = document.querySelector("#author").value;
+                let bookPublisher = document.querySelector("#publisher").value;
+                let bookStatus = document.querySelector("#status").value;
+
+                if (bookId.length != 6 || isNaN(bookId)) {
+                    alert("도서 ID는 6자리 숫자로 입력해주세요.");
+                    return;
+                }
+
+                let checkId = false;
+
+                for (let i = 0; i < books.length; i++) {
+                    if (books[i].bookId == bookId && books[i].id !== updateId) {
+                        checkId = true;
+                        break;
+                    }
+                }
+
+                if (checkId == true) {
+                    alert("이미 등록된 도서ID입니다!");
+                    return;
+                }
+
+                const book = {
+                    bookId: bookId,
+                    title: bookTitle,
+                    genre: bookGenre,
+                    author: bookAuthor,
+                    publisher: bookPublisher,
+                    status: bookStatus
+                };
+
+                try {
+                    if (updateId === null) {
+                        await addBook(book);
+                    }
+                    else {
+                        await editBook(updateId, book);
+                    }
+
+                    document.querySelector("#bookForm").reset();
+                }
+                catch (error) {
+                    console.log("오류 발생:", error);
+                    alert(error.message);
+                }
+            })
+        };
+
+
+        const API_URL = "https://6adea6dd4e88f1bba4a53a30.mockapi.io/Book";
+        let books = [];
+        let updateId = null;
+
+        async function loadBooks() {
+            try {
+                const response = await fetch(API_URL);
+
+                if (!response.ok) {
+                    throw new Error("데이터를 가져오지 못했습니다.");
+                }
+                books = await response.json();
+                showBooks(books);
+
+            } catch (error) {
+                alert("데이터를 가져오는 중 오류가 발생했습니다!")
+                console.error(error);
+
+            }
+        }
+
+        async function addBook(book) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(book)
+                });
+
+                if (!response.ok) {
+                    throw new Error("도서 추가에 실패했습니다.");
+                }
+
+                await response.json();
+                alert("도서가 추가되었습니다!");
+                await loadBooks();
+
+            } catch (error) {
+                alert("도서를 추가하는 중 오류가 발생했습니다!");
+                console.error(error);
+            }
+        }
+
+        async function editBook(id, book) {
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(book)
+                });
+                if (!response.ok) {
+                    throw new Error("도서 수정에 실패했습니다.");
+                }
+
+                const editBook = await response.json();
+                alert("도서가 수정되었습니다!");
+
+                updateId = null;
+                await loadBooks();
+            } catch (error) {
+                alert("도서 수정 중 오류가 발생했습니다!")
+                console.error(error);
+            }
+
+        }
+
+        async function deleteBook(id) {
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: "DELETE"
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                alert("도서가 삭제되었습니다.");
+                await loadBooks();
+            } catch (error) {
+                alert("도서 삭제 중 오류가 발생했습니다!");
+                console.log(error);
+            }
+        }
+    </script>
+
+</head>
+
+<body>
+    <header class="navbar navbar-dark bg-dark">
+        <div class="container-fluid justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <img src="https://previews.123rf.com/images/siamimages/siamimages1612/siamimages161200561/67760057-book-icon-illustration-design.jpg"
+                    class="logo" alt="Book Management">
+
+                <p class="navbar-brand mb-0 ms-2">Book Management</p>
+            </div>
+
+        </div>
+    </header>
+
+    <main class="container">
+
+        <div class="container pt-5">
+            <h1>도서 관리 프로그램</h1>
+            <p>도서 정보를 확인하고 관리할 수 있습니다.</p>
+        </div>
+
+        <div class="mt-5">
+            <h2>도서 정보 입력</h2>
+
+            <form id="bookForm">
+
+                <div class="mb-3">
+                    <label for="bookId" class="form-label">
+                        도서 ID
+                    </label>
+                    <input type="text" id="bookId" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="title" class="form-label">
+                        도서명
+                    </label>
+                    <input type="text" id="title" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="genre" class="form-label">
+                        장르
+                    </label>
+                    <input type="text" id="genre" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="author" class="form-label">
+                        저자
+                    </label>
+                    <input type="text" id="author" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label for="publisher" class="form-label">
+                        출판사
+                    </label>
+                    <input type="text" id="publisher" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="status" class="form-label">
+                        대여 상태
+                    </label>
+
+                    <select id="status" class="form-select">
+                        <option value="대여 가능">
+                            대여 가능
+                        </option>
+                        <option value="대여 중">
+                            대여 중
+                        </option>
+                    </select>
+                </div>
+
+                <button type="submit" id="addBtn" class="btn btn-primary">
+                    저장
+                </button>
+            </form>
+        </div>
+
+        <div class="mt-5">
+            <h2>도서 목록</h2>
+            <p>현재 등록된 도서 목록입니다.</p>
+
+            <div class="seachDiv">
+                <input type="text" id="searchBook" class="form-control" placeholder="원하는 도서 제목을 입력">
+
+                <button type="button" id="searchBtn" class="btn btn-primary">검색</button>
+            </div>
+            <p class="ppp">빈칸 검색은 초기화 입니다.</p>
+            <ul id="bookList">
+            </ul>
+        </div>
+        <a href="index.html" class="btn btn-secondary">홈으로 가기</a>
+
+    </main>
+
+    <footer>
+        <p class="text-center text-body-secondary">
+            Book Management System © 2026
+        </p>
+    </footer>
+
+</body>
+
+</html>

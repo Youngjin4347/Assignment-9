@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .place {
+            background-color: yellow;
+            color: red;
+            width:100px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+    <script>
+        window.addEventListener("load", function () {
+            const count = document.querySelector(".place");
+            const start = document.querySelector("#start");
+            const stop = document.querySelector("#stop");
+            let index = 0;
+            let timer;
+            start.addEventListener("click", function () {
+
+                timer = setInterval(function() {
+                    index++;
+                    count.textContent = index;
+                }, 1000)
+
+
+            });
+
+            stop.addEventListener("click", function () {
+
+                clearInterval(timer);
+
+            });
+
+        });
+
+
+    </script>
+</head>
+
+<body>
+
+    <div class="place">
+        0
+    </div>
+
+    <button type="button" id="start" name="start">시작</button>
+    <button type="button " id="stop" name="stop">중지</button>
+
+</body>
+
+</html>
